@@ -6,6 +6,92 @@ import fs from "fs";
 import path from "path";
 
 const SOURCES_PATH = path.join(process.cwd(), "sources.json");
+// --- iTunes enrich (no auth) ---
+// Persists small cache in repo to avoid re-querying.
+const ITUNES_CACHE_PATH = path.join(__dirname, "itunes_cache.json");
+function loadItunesCache(){
+  try { return JSON.parse(fs.readFileSync(ITUNES_CACHE_PATH,"utf8")); } catch { return {}; }
+}
+function saveItunesCache(cache){
+  fs.writeFileSync(ITUNES_CACHE_PATH, JSON.stringify(cache, null, 2), "utf8");
+}
+function normKey(s){ return String(s||"").toLowerCase().replace(/\s+/g," ").trim(); }
+function trackKey(artist, title){ return `${normKey(artist)} — ${normKey(title)}`; }
+
+async function itunesLookup(artist, title){
+  const term = encodeURIComponent(`${artist} ${title}`.trim());
+  const url = `https://itunes.apple.com/search?term=${term}&entity=song&limit=1`;
+  const res = await fetch(url, { headers: { "User-Agent": "MB-RadarCache/1.0" }});
+  if(!res.ok) throw new Error(`itunes_http_${res.status}`);
+  const json = await res.json();
+  const item = (json.results && json.results[0]) ? json.results[0] : null;
+  if(!item) return null;
+  return {
+    itunes_genre: item.primaryGenreName || "",
+    release_date: item.releaseDate ? String(item.releaseDate).slice(0,10) : "",
+    track_view_url: item.trackViewUrl || "",
+    artwork: (item.artworkUrl100 || item.artworkUrl60 || item.artworkUrl30 || "").replace("100x100", "300x300")
+  };
+}
+
+function calcAgeDays(releaseDateISO){
+  if(!releaseDateISO) return null;
+  const d = new Date(releaseDateISO);
+  if(isNaN(d.getTime())) return null;
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  return Math.max(0, Math.floor(diff / (1000*60*60*24)));
+}
+
+async function enrichWithItunes(items, errors){
+  const cache = loadItunesCache();
+  let used = 0;
+
+  // Enrich unique tracks only once (items are already de-duped).
+  // Concurrency limiter:
+  const CONCURRENCY = 6;
+  let i = 0;
+
+  async function worker(){
+    while(i < items.length){
+      const idx = i++;
+      const it = items[idx];
+      const key = trackKey(it.artist, it.title);
+      if(cache[key]){
+        const c = cache[key];
+        it.itunes_genre = it.itunes_genre || c.itunes_genre || "";
+        it.release_date = it.release_date || c.release_date || "";
+        it.itunes_artwork = it.itunes_artwork || c.artwork || "";
+        it.release_year = it.release_year || (it.release_date ? Number(String(it.release_date).slice(0,4)) : null);
+        it.age_days = it.age_days ?? calcAgeDays(it.release_date);
+        continue;
+      }
+      try{
+        const found = await itunesLookup(it.artist, it.title);
+        if(found){
+          cache[key] = found;
+          used++;
+          it.itunes_genre = it.itunes_genre || found.itunes_genre || "";
+          it.release_date = it.release_date || found.release_date || "";
+          it.itunes_artwork = it.itunes_artwork || found.artwork || "";
+          it.release_year = it.release_year || (it.release_date ? Number(String(it.release_date).slice(0,4)) : null);
+          it.age_days = it.age_days ?? calcAgeDays(it.release_date);
+        } else {
+          cache[key] = { itunes_genre:"", release_date:"", track_view_url:"", artwork:"" };
+        }
+      }catch(e){
+        errors.push({ source: "iTunes", error: "itunes_lookup_failed", detail: String(e.message||e), track: `${it.artist} - ${it.title}` });
+      }
+    }
+  }
+
+  const workers = Array.from({length: CONCURRENCY}, ()=>worker());
+  await Promise.all(workers);
+  saveItunesCache(cache);
+  return used;
+}
+
+
 const OUT_PATH = path.join(process.cwd(), "cache.json");
 
 function nowISO() {
@@ -128,12 +214,12 @@ function parseKworbTracks(html, sourceType, sourceName, sourceUrl, region, bucke
       streams: null,
       delta: null,
       itunes_genre: "",
-      genre_label: "Pop Latino",
+      genre_label: "",
       release_date: "",
       release_year: null,
       age_days: null,
       freshness_code: "unknown",
-      freshness_label: "Sin fecha",
+      freshness_label: "",
       youtube_video_id: "",
       youtube_url: "",
       cover_url: "",
@@ -214,13 +300,15 @@ async function main() {
 
   const unique = aggregateAndDedup(all);
 
+  const itunes_used = await enrichWithItunes(unique, errors);
+
   const payload = {
     ok: true,
     generated_at: nowISO(),
     raw_count: all.length,
     count: unique.length,
     sources_count: sources.length,
-    itunes_used: 0,
+    itunes_used: itunes_used,
     yt_used: 0,
     errors,
     items: unique,
