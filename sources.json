@@ -1,0 +1,26 @@
+[
+  { "name":"Venezuela (YouTube)", "region":"VE", "bucket":"YT", "url":"https://kworb.net/youtube/insights/ve_daily.html" },
+  { "name":"Colombia (YouTube)",  "region":"CO", "bucket":"YT", "url":"https://kworb.net/youtube/insights/co_daily.html" },
+  { "name":"Argentina (YouTube)", "region":"AR", "bucket":"YT", "url":"https://kworb.net/youtube/insights/ar_daily.html" },
+  { "name":"Chile (YouTube)",     "region":"CL", "bucket":"YT", "url":"https://kworb.net/youtube/insights/cl_daily.html" },
+  { "name":"Mexico (YouTube)",    "region":"MX", "bucket":"YT", "url":"https://kworb.net/youtube/insights/mx_daily.html" },
+  { "name":"Spain (YouTube)",     "region":"ES", "bucket":"YT", "url":"https://kworb.net/youtube/insights/es_daily.html" },
+  { "name":"USA (YouTube)",       "region":"US", "bucket":"YT", "url":"https://kworb.net/youtube/insights/us_daily.html" },
+
+  { "name":"Venezuela (Spotify)", "region":"VE", "bucket":"Spotify", "url":"https://kworb.net/spotify/country/ve_daily.html" },
+  { "name":"Colombia (Spotify)",  "region":"CO", "bucket":"Spotify", "url":"https://kworb.net/spotify/country/co_daily.html" },
+  { "name":"Argentina (Spotify)", "region":"AR", "bucket":"Spotify", "url":"https://kworb.net/spotify/country/ar_daily.html" },
+  { "name":"Chile (Spotify)",     "region":"CL", "bucket":"Spotify", "url":"https://kworb.net/spotify/country/cl_daily.html" },
+  { "name":"Mexico (Spotify)",    "region":"MX", "bucket":"Spotify", "url":"https://kworb.net/spotify/country/mx_daily.html" },
+  { "name":"Spain (Spotify)",     "region":"ES", "bucket":"Spotify", "url":"https://kworb.net/spotify/country/es_daily.html" },
+  { "name":"USA (Spotify)",       "region":"US", "bucket":"Spotify", "url":"https://kworb.net/spotify/country/us_daily.html" },
+
+  { "name":"Brazil (Deezer)",     "region":"BR", "bucket":"Deezer", "url":"https://kworb.net/charts/deezer/br.html" },
+  { "name":"UK (Deezer)",         "region":"UK", "bucket":"Deezer", "url":"https://kworb.net/charts/deezer/uk.html" },
+  { "name":"Portugal (Deezer)",   "region":"PT", "bucket":"Deezer", "url":"https://kworb.net/charts/deezer/pt.html" },
+  { "name":"Worldwide (Deezer)",  "region":"WW", "bucket":"Deezer", "url":"https://kworb.net/charts/deezer/ww.html" },
+
+  { "name":"Venezuela (iTunes)",  "region":"VE", "bucket":"iTunes", "url":"https://kworb.net/charts/itunes/ve.html" },
+  { "name":"USA (iTunes)",        "region":"US", "bucket":"iTunes", "url":"https://kworb.net/charts/itunes/us.html" },
+  { "name":"Spain (iTunes)",      "region":"ES", "bucket":"iTunes", "url":"https://kworb.net/charts/itunes/es.html" }
+]
