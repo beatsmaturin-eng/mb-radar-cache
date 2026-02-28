@@ -5,16 +5,21 @@ on:
   schedule:
     - cron: "*/30 * * * *"
 
+concurrency:
+  group: radar-cache
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -30,4 +35,5 @@ jobs:
           git config user.email "actions@github.com"
           git add cache.json
           git commit -m "Auto update cache.json" || echo "No changes"
-          git push
+          git pull --rebase || true
+          git push || (sleep 3 && git push)
