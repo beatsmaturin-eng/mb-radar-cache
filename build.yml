@@ -1,0 +1,41 @@
+name: Build radar cache
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */2 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate cache.json
+        run: |
+          node generate_cache.js
+
+      - name: Prepare Pages folder
+        run: |
+          mkdir -p public
+          cp cache.json public/cache.json
+
+      - name: Deploy to gh-pages
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout --orphan gh-pages || true
+          git reset --hard
+          cp -r public/* .
+          git add .
+          git commit -m "Update cache" || true
+          git push -f origin gh-pages
